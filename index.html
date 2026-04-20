@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Regex Tester — Alvento</title>
+  <meta name="description" content="Live regex tester with AI-powered explanations and fix suggestions. Built by Alvento." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface-raised: #1c1c1c;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --muted: #888888;
+      --dim: #555555;
+      --accent: #c4f042;
+      --accent-dim: #8aaa2e;
+      --red: #ff4d4d;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(10,10,10,0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      height: 56px;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.5rem;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    /* MAIN LAYOUT */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      padding-top: 96px;
+      padding-bottom: 80px;
+    }
+
+    /* HERO */
+    .hero {
+      margin-bottom: 48px;
+    }
+
+    .hero-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .hero h1 em {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .hero-sub {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 560px;
+    }
+
+    /* SECTION LABEL */
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      margin-bottom: 8px;
+    }
+
+    /* TOOL GRID */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 2px;
+    }
+
+    @media (max-width: 768px) {
+      .tool-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--surface);
+      padding: 24px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    /* REGEX INPUT */
+    .regex-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+      overflow: hidden;
+    }
+
+    .regex-input-wrap:focus-within {
+      border-color: var(--accent);
+    }
+
+    .regex-input-wrap.error {
+      border-color: var(--red) !important;
+    }
+
+    .regex-delim {
+      padding: 12px 10px;
+      color: var(--dim);
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    #regexInput {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      padding: 12px 0;
+      min-width: 0;
+    }
+
+    #regexFlags {
+      padding: 12px 10px;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: none;
+      border-left: 1px solid var(--border);
+      padding: 0 12px;
+      height: 100%;
+      cursor: pointer;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s, background 0.2s;
+      flex-shrink: 0;
+      align-self: stretch;
+    }
+
+    .copy-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+    .copy-btn.copied { color: var(--accent); }
+
+    /* FLAGS */
+    .flags-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .flag-check {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .flag-check input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--surface-raised);
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .flag-check input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .flag-check input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px; top: 1px;
+      width: 5px; height: 9px;
+      border: 2px solid #0a0a0a;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .flag-check span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .flag-check span strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* ERROR MESSAGE */
+    .error-msg {
+      display: none;
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: var(--red);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .error-msg.visible { display: block; }
+
+    /* TEXTAREA / HIGHLIGHT */
+    .test-string-wrap {
+      position: relative;
+    }
+
+    .highlight-layer {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      padding: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow: hidden;
+      pointer-events: none;
+      color: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+    }
+
+    .highlight-layer mark {
+      background: rgba(196, 240, 66, 0.3);
+      border-bottom: 2px solid var(--accent);
+      color: transparent;
+      border-radius: 2px;
+    }
+
+    #testInput {
+      position: relative;
+      width: 100%;
+      min-height: 220px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      caret-color: var(--accent);
+      transition: border-color 0.2s;
+      white-space: pre-wrap;
+    }
+
+    #testInput:focus { border-color: var(--accent); }
+
+    /* STATS BAR */
+    .stats-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: none;
+      padding: 10px 24px;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .stat strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* BOTTOM PANELS */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 768px) {
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+    /* MATCHES LIST */
+    .matches-list {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .matches-list::-webkit-scrollbar { width: 4px; }
+    .matches-list::-webkit-scrollbar-track { background: transparent; }
+    .matches-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .match-item {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    .match-item:last-child { border-bottom: none; }
+
+    .match-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .match-badge {
+      background: rgba(196, 240, 66, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(196, 240, 66, 0.3);
+      padding: 1px 7px;
+      border-radius: 2px;
+      font-size: 0.7rem;
+    }
+
+    .match-index {
+      color: var(--dim);
+      font-size: 0.7rem;
+    }
+
+    .match-value {
+      color: var(--text);
+      background: var(--surface-raised);
+      padding: 4px 8px;
+      border-radius: 3px;
+      word-break: break-all;
+    }
+
+    .match-groups {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .group-pill {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .group-pill strong { color: var(--accent-dim); }
+
+    .no-matches {
+      padding: 32px;
+      text-align: center;
+      color: var(--dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    /* AI PANEL */
+    .ai-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0a0a0a;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .btn-primary:hover { background: #d4ff52; }
+    .btn-primary:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      background: var(--accent);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 22px;
+      border-radius: 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .btn-secondary:hover { border-color: var(--muted); background: rgba(255,255,255,0.02); }
+    .btn-secondary:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .ai-output {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      min-height: 80px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .ai-output.has-content { color: var(--text); }
+
+    .ai-output.loading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--dim);
+    }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* SETTINGS / API KEY */
+    .settings-row {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .settings-toggle {
+      background: none;
+      border: none;
+      color: var(--dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+      padding: 0;
+    }
+
+    .settings-toggle:hover { color: var(--muted); }
+
+    .settings-panel {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .settings-panel.open { display: block; }
+
+    .api-key-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #apiKeyInput {
+      flex: 1;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #apiKeyInput:focus { border-color: var(--accent); }
+
+    .api-key-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--dim);
+    }
+
+    .api-key-status.valid { color: var(--accent); }
+
+    /* SHARE */
+    .share-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .share-url {
+      flex: 1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--dim);
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 7px 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .btn-share {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 7px 16px;
+      border-radius: 4px;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn-share:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-share.copied { border-color: var(--accent); color: var(--accent); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      margin-top: 80px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .footer-cta {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.1rem;
+      color: var(--muted);
+    }
+
+    .footer-cta a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer-cta a:hover { text-decoration: underline; }
+
+    .footer-meta {
+      margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* TOOLTIP */
+    [data-tooltip] {
+      position: relative;
+    }
+
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      padding: 6px 10px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 50;
+    }
+
+    [data-tooltip]:hover::after {
+      opacity: 1;
+    }
+
+    /* SUGGEST BOX */
+    .suggest-box {
+      display: none;
+      margin-top: 10px;
+      background: var(--surface-raised);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 12px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .suggest-box.visible { display: block; }
+
+    .suggest-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-dim);
+      margin-bottom: 6px;
+    }
+
+    .suggest-value {
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .suggest-apply {
+      margin-top: 8px;
+      background: none;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 5px 12px;
+      border-radius: 3px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .suggest-apply:hover { background: rgba(196,240,66,0.1); }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">Alvento<span>.</span></a>
+      <ul class="nav-links">
+        <li><a href="/tools/">Tools</a></li>
+        <li><a href="https://alvento.ltd" target="_blank" rel="noopener">alvento.ltd</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main>
+    <div class="hero">
+      <div class="hero-label">// utility tool</div>
+      <h1>Regex <em>Tester</em></h1>
+      <p class="hero-sub">Live pattern matching with highlight, match inspection, and AI-powered explanations.</p>
+    </div>
+
+    <!-- TOOL TOP PANELS -->
+    <div class="tool-grid">
+
+      <!-- LEFT: REGEX INPUT -->
+      <div class="panel">
+        <div class="section-label">Pattern</div>
+
+        <div class="regex-input-wrap" id="regexWrap">
+          <span class="regex-delim">/</span>
+          <input type="text" id="regexInput" placeholder="e.g. (\w+)@(\w+)\.(\w+)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          <span class="regex-delim" id="regexFlagsDisplay">/</span>
+          <span id="regexFlags"></span>
+          <button class="copy-btn" id="copyRegexBtn" title="Copy regex" aria-label="Copy regex">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <div class="flags-row">
+          <label class="flag-check">
+            <input type="checkbox" id="flagG" checked />
+            <span><strong>g</strong> global</span>
+          </label>
+          <label class="flag-check">
+            <input type="checkbox" id="flagI" />
+            <span><strong>i</strong> insensitive</span>
+          </label>
+          <label class="flag-check">
+            <input type="checkbox" id="flagM" />
+            <span><strong>m</strong> multiline</span>
+          </label>
+          <label class="flag-check">
+            <input type="checkbox" id="flagS" />
+            <span><strong>s</strong> dotAll</span>
+          </label>
+        </div>
+
+        <!-- AI FIX SUGGEST -->
+        <div class="suggest-box" id="suggestBox">
+          <div class="suggest-label">AI Suggested Fix</div>
+          <div class="suggest-value" id="suggestValue"></div>
+          <button class="suggest-apply" id="suggestApply">Apply fix</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: TEST STRING -->
+      <div class="panel">
+        <div class="section-label">Test String</div>
+        <div class="test-string-wrap">
+          <div class="highlight-layer" id="highlightLayer" aria-hidden="true"></div>
+          <textarea id="testInput" placeholder="Paste your test string here…" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+      <span class="stat">Matches: <strong id="matchCount">0</strong></span>
+      <span class="stat">Groups: <strong id="groupCount">0</strong></span>
+      <span class="stat">Characters: <strong id="charCount">0</strong></span>
+    </div>
+
+    <!-- BOTTOM PANELS -->
+    <div class="bottom-grid">
+
+      <!-- MATCHES -->
+      <div class="panel">
+        <div class="section-label">Matches</div>
+        <div class="matches-list" id="matchesList">
+          <div class="no-matches">No matches yet — enter a pattern above.</div>
+        </div>
+      </div>
+
+      <!-- AI -->
+      <div class="panel">
+        <div class="section-label">AI Assistant</div>
+
+        <div class="ai-buttons">
+          <button class="btn-primary" id="explainBtn" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Explain
+          </button>
+          <button class="btn-secondary" id="fixBtn" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            Fix Regex
+          </button>
+        </div>
+
+        <div class="ai-output" id="aiOutput">AI explanation will appear here. Enter a regex and click Explain.</div>
+
+        <!-- SETTINGS / API KEY -->
+        <div class="settings-row">
+          <button class="settings-toggle" id="settingsToggle">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+            Settings
+            <svg id="settingsChevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="settings-panel" id="settingsPanel">
+            <div class="section-label" style="margin-bottom: 8px; margin-top: 4px;">OpenRouter API Key</div>
+            <div class="api-key-wrap">
+              <input type="password" id="apiKeyInput" placeholder="sk-or-…" value="" autocomplete="off" />
+              <span class="api-key-status" id="apiKeyStatus">Not set</span>
+            </div>
+            <div style="margin-top: 6px; font-size: 0.72rem; color: var(--dim); font-family: 'JetBrains Mono', monospace;">
+              Get a free key at <a href="https://openrouter.ai" target="_blank" style="color: var(--accent-dim); text-decoration: none;">openrouter.ai</a> · Model: llama-3.3-70b-instruct:free
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SHARE BAR -->
+    <div class="share-bar">
+      <span class="section-label" style="margin-bottom: 0; flex-shrink: 0;">Share</span>
+      <div class="share-url" id="shareUrl">Encode a regex to generate a shareable link.</div>
+      <button class="btn-share" id="shareBtn">Copy Link</button>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-cta">Built by Alvento — need something custom built? <a href="https://alvento.ltd" target="_blank" rel="noopener">alvento.ltd</a></div>
+      <div class="footer-meta">Regex Tester · Powered by OpenRouter &amp; Llama 3.3</div>
+    </div>
+  </footer>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // ── Elements ──
+    const regexInput      = document.getElementById('regexInput');
+    const regexWrap       = document.getElementById('regexWrap');
+    const regexFlagsSpan  = document.getElementById('regexFlags');
+    const errorMsg        = document.getElementById('errorMsg');
+    const testInput       = document.getElementById('testInput');
+    const highlightLayer  = document.getElementById('highlightLayer');
+    const matchesList     = document.getElementById('matchesList');
+    const matchCountEl    = document.getElementById('matchCount');
+    const groupCountEl    = document.getElementById('groupCount');
+    const charCountEl     = document.getElementById('charCount');
+    const copyRegexBtn    = document.getElementById('copyRegexBtn');
+    const flagG           = document.getElementById('flagG');
+    const flagI           = document.getElementById('flagI');
+    const flagM           = document.getElementById('flagM');
+    const flagS           = document.getElementById('flagS');
+    const explainBtn      = document.getElementById('explainBtn');
+    const fixBtn          = document.getElementById('fixBtn');
+    const aiOutput        = document.getElementById('aiOutput');
+    const apiKeyInput     = document.getElementById('apiKeyInput');
+    const apiKeyStatus    = document.getElementById('apiKeyStatus');
+    const settingsToggle  = document.getElementById('settingsToggle');
+    const settingsPanel   = document.getElementById('settingsPanel');
+    const settingsChevron = document.getElementById('settingsChevron');
+    const shareUrl        = document.getElementById('shareUrl');
+    const shareBtn        = document.getElementById('shareBtn');
+    const suggestBox      = document.getElementById('suggestBox');
+    const suggestValue    = document.getElementById('suggestValue');
+    const suggestApply    = document.getElementById('suggestApply');
+
+    const PLACEHOLDER_KEY = 'OPENROUTER_API_KEY_HERE';
+    const MODEL           = 'meta-llama/llama-3.3-70b-instruct:free';
+    const OPENROUTER_URL  = 'https://openrouter.ai/api/v1/chat/completions';
+
+    let currentMatches = [];
+    let hasRegexError  = false;
+    let suggestedFix   = '';
+
+    // ── Load from URL hash ──
+    function loadFromHash() {
+      try {
+        const hash = window.location.hash.slice(1);
+        if (!hash) return;
+        const decoded = JSON.parse(decodeURIComponent(atob(hash)));
+        if (decoded.r !== undefined) regexInput.value = decoded.r;
+        if (decoded.f !== undefined) {
+          flagG.checked = decoded.f.includes('g');
+          flagI.checked = decoded.f.includes('i');
+          flagM.checked = decoded.f.includes('m');
+          flagS.checked = decoded.f.includes('s');
+        }
+        if (decoded.t !== undefined) testInput.value = decoded.t;
+      } catch (e) { /* ignore bad hashes */ }
+    }
+
+    // ── Update URL hash ──
+    function updateHash() {
+      const data = {
+        r: regexInput.value,
+        f: getFlags(),
+        t: testInput.value
+      };
+      try {
+        const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+        const url = window.location.origin + window.location.pathname + '#' + encoded;
+        history.replaceState(null, '', '#' + encoded);
+        shareUrl.textContent = url;
+      } catch (e) {}
+    }
+
+    // ── Flags ──
+    function getFlags() {
+      return (flagG.checked ? 'g' : '') +
+             (flagI.checked ? 'i' : '') +
+             (flagM.checked ? 'm' : '') +
+             (flagS.checked ? 's' : '');
+    }
+
+    // ── Build regex ──
+    function buildRegex() {
+      const pattern = regexInput.value;
+      if (!pattern) return null;
+      return new RegExp(pattern, getFlags());
+    }
+
+    // ── Escape HTML ──
+    function escHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ── Run matches ──
+    function runMatches() {
+      const pattern = regexInput.value;
+      const text    = testInput.value;
+
+      charCountEl.textContent = text.length;
+
+      // Clear
+      regexWrap.classList.remove('error');
+      errorMsg.classList.remove('visible');
+      errorMsg.textContent = '';
+      hasRegexError = false;
+
+      if (!pattern) {
+        highlightLayer.innerHTML = '';
+        renderNoMatches('Enter a pattern above.');
+        updateFlagsDisplay();
+        matchCountEl.textContent = '0';
+        groupCountEl.textContent = '0';
+        currentMatches = [];
+        updateHash();
+        updateAiButtons();
+        return;
+      }
+
+      let regex;
+      try {
+        regex = buildRegex();
+      } catch (e) {
+        regexWrap.classList.add('error');
+        errorMsg.textContent = '⚠ ' + e.message;
+        errorMsg.classList.add('visible');
+        hasRegexError = true;
+        highlightLayer.innerHTML = '';
+        renderNoMatches('Invalid regex — fix the pattern.');
+        matchCountEl.textContent = '0';
+        groupCountEl.textContent = '0';
+        currentMatches = [];
+        updateHash();
+        updateAiButtons();
+        return;
+      }
+
+      // Collect matches
+      currentMatches = [];
+      let m;
+
+      if (flagG.checked) {
+        regex.lastIndex = 0;
+        while ((m = regex.exec(text)) !== null) {
+          currentMatches.push({
+            value: m[0],
+            index: m.index,
+            end: m.index + m[0].length,
+            groups: Array.from(m).slice(1),
+            namedGroups: m.groups || {}
+          });
+          if (m[0].length === 0) regex.lastIndex++;
+          if (currentMatches.length > 5000) break; // safety
+        }
+      } else {
+        m = regex.exec(text);
+        if (m) {
+          currentMatches.push({
+            value: m[0],
+            index: m.index,
+            end: m.index + m[0].length,
+            groups: Array.from(m).slice(1),
+            namedGroups: m.groups || {}
+          });
+        }
+      }
+
+      matchCountEl.textContent = currentMatches.length;
+      const totalGroups = currentMatches.reduce((a, c) => a + c.groups.filter(g => g !== undefined).length, 0);
+      groupCountEl.textContent = totalGroups;
+
+      renderHighlights(text);
+      renderMatchList();
+      updateHash();
+      updateAiButtons();
+    }
+
+    // ── Highlight layer ──
+    function renderHighlights(text) {
+      if (!currentMatches.length) {
+        highlightLayer.innerHTML = escHtml(text);
+        return;
+      }
+
+      let html = '';
+      let cursor = 0;
+
+      for (const match of currentMatches) {
+        if (match.index > cursor) {
+          html += escHtml(text.slice(cursor, match.index));
+        }
+        html += '<mark>' + escHtml(match.value) + '</mark>';
+        cursor = match.end;
+      }
+
+      if (cursor < text.length) {
+        html += escHtml(text.slice(cursor));
+      }
+
+      highlightLayer.innerHTML = html;
+    }
+
+    // ── Sync scroll ──
+    testInput.addEventListener('scroll', () => {
+      highlightLayer.scrollTop  = testInput.scrollTop;
+      highlightLayer.scrollLeft = testInput.scrollLeft;
+    });
+
+    // ── Match list ──
+    function renderMatchList() {
+      if (!currentMatches.length) {
+        renderNoMatches(regexInput.value ? 'No matches found.' : 'Enter a pattern above.');
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+
+      currentMatches.forEach((match, i) => {
+        const div = document.createElement('div');
+        div.className = 'match-item';
+
+        let inner = `<div class="match-header">
+          <span class="match-badge">Match ${i + 1}</span>
+          <span class="match-index">index ${match.index}–${match.end}</span>
+        </div>
+        <div class="match-value">${escHtml(match.value || '(empty)')}</div>`;
+
+        if (match.groups.length) {
+          const pills = match.groups.map((g, gi) => {
+            if (g === undefined) return '';
+            return `<span class="group-pill"><strong>$${gi + 1}</strong> ${escHtml(g)}</span>`;
+          }).join('');
+
+          const namedPills = Object.entries(match.namedGroups).map(([k, v]) =>
+            `<span class="group-pill"><strong>${escHtml(k)}</strong> ${escHtml(v)}</span>`
+          ).join('');
+
+          if (pills || namedPills) {
+            inner += `<div class="match-groups">${pills}${namedPills}</div>`;
+          }
+        }
+
+        div.innerHTML = inner;
+        frag.appendChild(div);
+      });
+
+      matchesList.innerHTML = '';
+      matchesList.appendChild(frag);
+    }
+
+    function renderNoMatches(msg) {
+      matchesList.innerHTML = `<div class="no-matches">${escHtml(msg)}</div>`;
+    }
+
+    // ── Flags display ──
+    function updateFlagsDisplay() {
+      regexFlagsSpan.textContent = getFlags();
+    }
+
+    // ── Copy regex ──
+    copyRegexBtn.addEventListener('click', () => {
+      const text = `/${regexInput.value}/${getFlags()}`;
+      navigator.clipboard.writeText(text).then(() => {
+        copyRegexBtn.classList.add('copied');
+        setTimeout(() => copyRegexBtn.classList.remove('copied'), 1500);
+      });
+    });
+
+    // ── API Key ──
+    function getApiKey() {
+      return apiKeyInput.value.trim();
+    }
+
+    function isValidKey(k) {
+      return k && k !== PLACEHOLDER_KEY && k.length > 10;
+    }
+
+    function updateAiButtons() {
+      const key = getApiKey();
+      const valid = isValidKey(key);
+      const tooltip = valid ? '' : 'Add OpenRouter API key to enable AI features';
+
+      explainBtn.disabled = !valid || !regexInput.value;
+      fixBtn.disabled     = !valid || !hasRegexError;
+
+      if (!valid) {
+        explainBtn.setAttribute('data-tooltip', tooltip);
+        fixBtn.setAttribute('data-tooltip', tooltip);
+      } else {
+        explainBtn.removeAttribute('data-tooltip');
+        if (!hasRegexError) {
+          fixBtn.setAttribute('data-tooltip', 'Only available when regex has an error');
+        } else {
+          fixBtn.removeAttribute('data-tooltip');
+        }
+      }
+    }
+
+    apiKeyInput.addEventListener('input', () => {
+      const k = getApiKey();
+      if (isValidKey(k)) {
+        apiKeyStatus.textContent = 'Key set ✓';
+        apiKeyStatus.className = 'api-key-status valid';
+      } else {
+        apiKeyStatus.textContent = 'Not set';
+        apiKeyStatus.className = 'api-key-status';
+      }
+      updateAiButtons();
+    });
+
+    // ── Settings toggle ──
+    settingsToggle.addEventListener('click', () => {
+      const open = settingsPanel.classList.toggle('open');
+      settingsChevron.style.transform = open ? 'rotate(180deg)' : '';
+    });
+
+    // ── OpenRouter call ──
+    async function callAI(prompt) {
+      const key = getApiKey();
+      if (!isValidKey(key)) throw new Error('No API key set.');
+
+      const res = await fetch(OPENROUTER_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.href,
+          'X-Title': 'Alvento Regex Tester'
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 512
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `API error ${res.status}`);
+      }
+
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content?.trim() || '(No response)';
+    }
+
+    function setAiLoading() {
+      aiOutput.className = 'ai-output loading';
+      aiOutput.innerHTML = '<div class="spinner"></div> Thinking…';
+    }
+
+    function setAiContent(text) {
+      aiOutput.className = 'ai-output has-content';
+      aiOutput.textContent = text;
+    }
+
+    function setAiError(msg) {
+      aiOutput.className = 'ai-output';
+      aiOutput.textContent = '⚠ ' + msg;
+    }
+
+    // ── Explain ──
+    explainBtn.addEventListener('click', async () => {
+      const pattern = regexInput.value;
+      if (!pattern) return;
+
+      setAiLoading();
+      explainBtn.disabled = true;
+
+      const prompt = `You are a regex expert. Explain the following regular expression in plain English. Be clear and concise. Also note any potential issues or improvements.
+
+Regex: /${pattern}/${getFlags()}
+Test string context: ${testInput.value.slice(0, 300)}
+
+Provide:
+1. A plain-English explanation of what the regex matches
+2. A breakdown of key parts
+3. Any suggestions for improvement (if applicable)
+
+Keep it concise and practical.`;
+
+      try {
+        const result = await callAI(prompt);
+        setAiContent(result);
+      } catch (e) {
+        setAiError(e.message);
+      } finally {
+        updateAiButtons();
+      }
+    });
+
+    // ── Fix ──
+    fixBtn.addEventListener('click', async () => {
+      const pattern = regexInput.value;
+      if (!hasRegexError) return;
+
+      setAiLoading();
+      fixBtn.disabled = true;
+      suggestBox.classList.remove('visible');
+
+      const errText = errorMsg.textContent;
+
+      const prompt = `You are a regex expert. The following regular expression has a syntax error.
+
+Broken regex: /${pattern}/${getFlags()}
+Error: ${errText}
+
+Provide ONLY the corrected regex pattern (without delimiters or flags), nothing else. Just the raw pattern string.`;
+
+      try {
+        const result = await callAI(prompt);
+        // Extract just the pattern — strip /.../ if the model included them
+        suggestedFix = result.replace(/^\/(.+)\/[gimsuy]*$/, '$1').trim();
+        suggestValue.textContent = `/${suggestedFix}/${getFlags()}`;
+        suggestBox.classList.add('visible');
+        setAiContent('Suggested fix shown above the flags. Click "Apply fix" to use it.');
+      } catch (e) {
+        setAiError(e.message);
+      } finally {
+        updateAiButtons();
+      }
+    });
+
+    suggestApply.addEventListener('click', () => {
+      if (suggestedFix) {
+        regexInput.value = suggestedFix;
+        suggestBox.classList.remove('visible');
+        runMatches();
+      }
+    });
+
+    // ── Share ──
+    shareBtn.addEventListener('click', () => {
+      const url = shareUrl.textContent;
+      if (url && url !== 'Encode a regex to generate a shareable link.') {
+        navigator.clipboard.writeText(url).then(() => {
+          shareBtn.textContent = 'Copied!';
+          shareBtn.classList.add('copied');
+          setTimeout(() => {
+            shareBtn.textContent = 'Copy Link';
+            shareBtn.classList.remove('copied');
+          }, 2000);
+        });
+      }
+    });
+
+    // ── Event listeners ──
+    function onInput() {
+      updateFlagsDisplay();
+      runMatches();
+    }
+
+    regexInput.addEventListener('input', onInput);
+    testInput.addEventListener('input', onInput);
+    flagG.addEventListener('change', onInput);
+    flagI.addEventListener('change', onInput);
+    flagM.addEventListener('change', onInput);
+    flagS.addEventListener('change', onInput);
+
+    // ── Init ──
+    loadFromHash();
+    updateFlagsDisplay();
+    runMatches();
+    updateAiButtons();
+
+    // ── Handle hash changes (back/forward) ──
+    window.addEventListener('hashchange', () => {
+      loadFromHash();
+      updateFlagsDisplay();
+      runMatches();
+    });
+
+  })();
+  </script>
+</body>
+</html>
